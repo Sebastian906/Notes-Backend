@@ -89,6 +89,43 @@ app.post("/crear-cuenta", async (req, res) => {
     });
 });
 
+app.post("/login", async (req, res) => {
+    const { email, password } = req.body;
+
+    if(!email) { 
+        return res.status(400).json({ message: "Se require un correo" });
+    }
+
+    if(!password) {
+        return res.status(400).json({ message: "Se require una contraseña" });
+    }
+
+    const userInfo = await Usuario.findOne({ email: email });
+
+    if(!userInfo) {
+        return res.status(400).json({ message: "Usuario no encontrado" });
+    }
+
+    if (userInfo.email == email && userInfo.password == password) {
+        const user = { user: userInfo };
+        const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+            expiresIn: "3600m",
+        });
+
+        return res.json({
+            error: false,
+            message: "Inicio de sesión exitoso",
+            email,
+            accessToken,
+        });
+    } else {
+        return res.status(400).json({
+            error: true,
+            message: "Credenciales incorrectas",
+        });
+    }
+});
+
 app.listen(8000);
 
 module.exports = app;
