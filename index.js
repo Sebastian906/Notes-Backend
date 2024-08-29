@@ -17,6 +17,7 @@ mongoose.connect(connectionString, {
 });
 
 const Usuario = require("./models/user.model.js");
+const Notas = require("./models/note.model.js");
 
 const express = require("express");
 const cors = require("cors");
@@ -85,7 +86,7 @@ app.post("/crear-cuenta", async (req, res) => {
         error: false,
         usuario,
         accessToken,
-        message: "Registro exitoso",
+        message: "Registro exitoso.",
     });
 });
 
@@ -93,17 +94,17 @@ app.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
     if(!email) { 
-        return res.status(400).json({ message: "Se require un correo" });
+        return res.status(400).json({ message: "Se require un correo." });
     }
 
     if(!password) {
-        return res.status(400).json({ message: "Se require una contraseña" });
+        return res.status(400).json({ message: "Se require una contraseña." });
     }
 
     const userInfo = await Usuario.findOne({ email: email });
 
     if(!userInfo) {
-        return res.status(400).json({ message: "Usuario no encontrado" });
+        return res.status(400).json({ message: "Usuario no encontrado." });
     }
 
     if (userInfo.email == email && userInfo.password == password) {
@@ -114,16 +115,53 @@ app.post("/login", async (req, res) => {
 
         return res.json({
             error: false,
-            message: "Inicio de sesión exitoso",
+            message: "Inicio de sesión exitoso.",
             email,
             accessToken,
         });
     } else {
         return res.status(400).json({
             error: true,
-            message: "Credenciales incorrectas",
+            message: "Credenciales incorrectas.",
         });
     }
+});
+
+// Agregar Nota
+
+app.post("/add-note", authenticateToken, async (req, res) => {
+    const { title, content, tags } = req.body;
+    const { user } = req.user;
+
+    if(!title) {
+        return res.status(400).json({ error: true, message: "Se require un titulo." });
+    }
+
+    if (!content) {
+        return res.status(400).json({ error: true, message: "Se require un contenido." });
+    }
+
+    try {
+        const note = new Notas({
+            title,
+            content,
+            tags: tags || [],
+            userId: user._id,
+        });
+
+        await note.save();
+
+        return res.json({
+            error: false,
+            note,
+            message: "Nota añadida exitosamente.",
+        });
+    } catch (error) {
+        return res.status(500).json({
+            error: true,
+            message: `Internal Server Error: ${error.message}`,
+        });
+    }    
 });
 
 app.listen(8000);
