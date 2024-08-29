@@ -200,7 +200,28 @@ app.put("/edit-note/:noteId", authenticateToken, async (req, res) => {
             message: `Internal Server Error: ${error.message}`,
         });
     }
-})
+});
+
+app.get("/get-notes", authenticateToken, async (req, res) => {
+    const { user } = req.user;
+
+    try {
+        const notes = await Notas.find({ userId: user._id 
+        }).sort({ isPinned: -1 
+        });
+
+        return res.json({
+            error: false,
+            notes,
+            message: "Se han encontrado todas las notas.",
+        });
+    } catch (error) {
+        return res.status(500).json({
+            error: true,
+            message: `Internal Server Error: ${error.message}`,
+        });
+    }
+});
 
 app.listen(8000);
 
